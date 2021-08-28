@@ -1,0 +1,196 @@
+---
+title: "Decision Tree"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tree)
+library(ISLR)
+library(randomForest)
+library(gbm)
+```
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = 'two_classes_original_heart.csv')
+heart = heart[-1]
+heart
+```
+
+```{r}
+heart = heart[-1]
+length(heart$num)
+#heart = na.omit(heart)
+#length(heart$num)
+```
+```{r}
+num1 = (sum(is.na(heart$ca)))
+num2 = (length(heart$exang[heart$exang == 0]))
+num3 = (length(heart$slope[heart$slope == ""]))
+num4 = (length(heart$chol[heart$chol == ""]))
+num5 = (length(heart$thal[heart$thal == ""]))
+print((num1+num3+num4+num5)/4)
+```
+```{r}
+#print(sum(is.na(heart$trestbps)))
+#print(sum(is.na(heart$chol)))
+#print(sum(is.na(heart$thalch)))
+#print(sum(is.na(heart$oldpeak)))
+#print(sum(is.na(heart$ca)))
+#Columsn with all 0's or nulls
+heart = subset(heart, select=-ca)
+heart = subset(heart, select=-exang)
+heart = heart[!heart$trestbps == 0,]
+length(heart$num)
+```
+```{r}
+names(heart)
+#print(length(heart$chol[heart$chol == 0]))
+#print(length(heart$trestbps[heart$trestbps == 0]))
+#print(length(heart$chol[heart$exang == 0]))
+```
+
+```{r}
+heart = na.omit(heart)
+print(length(heart$num))
+```
+```{r}
+#print(heart$restecg)
+#print(heart$slope)
+print(length(heart$restecg[heart$restecg == ""]))
+```
+```{r}
+#Removes columns with significant number of ""
+heart = subset(heart, select=-slope)
+heart = subset(heart, select=-chol)
+heart = subset(heart, select=-thal)
+heart = heart[!heart$restecg == "",]
+```
+
+```{r}
+heart = heart[order(-heart$num),]
+number_of_class_2 = length(heart$num[heart$num == 1])
+difference_distribution = number_of_class_2 - length(heart$num[heart$num == 0])
+indices = sample.int(number_of_class_2, difference_distribution)
+dataset = heart[-indices,]
+```
+
+```{r}
+dataset
+length(dataset$num[dataset$num == 1])
+length(dataset$num[dataset$num == 0])
+```
+
+```{r}
+dataset$sex = as.factor(dataset$sex)
+dataset$cp = as.factor(dataset$cp)
+dataset$fbs = as.factor(dataset$fbs)
+dataset$restecg = as.factor(dataset$restecg)
+#dataset$exang = as.factor(dataset$exang)
+#dataset$slope = as.factor(dataset$slope)
+#dataset$thal = as.factor(dataset$thal)
+```
+
+```{r}
+dataset$num = as.factor(dataset$num)
+length(dataset$num)
+```
+
+```{r}
+test= sample(dim(dataset)[1], (dim(dataset)[1])/4)
+test_set = dataset[test,]
+train_set = dataset[-test,]
+```
+
+```{r}
+classification_tree = tree(num~., train_set)
+summary(classification_tree)
+```
+```{r}
+plot(classification_tree)
+text(classification_tree, pretty = 0)
+```
+
+```{r}
+predictions = predict(classification_tree, test_set, type="class")
+table(predictions, test_set$num)
+```
+```{r}
+#(94+54)/(94+54+17+40)
+(59+77)/(59+77+38+11)
+```
+
+```{r}
+cv_out =cv.tree(classification_tree ,FUN=prune.misclass )
+plot(cv_out$size, cv_out$dev, type="b")
+dev_min = which.min(cv_out$dev)
+points(cv_out$size[dev_min],cv_out$dev[dev_min], col="red",cex=2,pch=20)
+```
+
+
+```{r}
+pruned_tree = prune.misclass(classification_tree,best=4)
+summary(pruned_tree)
+plot(pruned_tree)
+text(pruned_tree, pretty=0)
+```
+```{r}
+pruned_predictions = predict(pruned_tree, test_set, type="class")
+table(pruned_predictions, test_set$num)
+```
+
+```{r}
+(75+69)/(75+69+19+22)
+```
+```{r}
+names(train_set)
+```
+
+```{r}
+bagged_tree = randomForest(num~.,data=train_set, mtry=9, importance=TRUE)
+bagged_tree
+```
+
+```{r}
+bag_predictions = predict(bagged_tree, test_set, type="class")
+table(bag_predictions, test_set$num)
+```
+
+```{r}
+(74+76)/(74+76+14+21)
+```
+
+```{r}
+varImpPlot(bagged_tree)
+```
+
+```{r}
+random_forest_tree = randomForest(num~.,data=train_set, mtry=3, importance=TRUE)
+random_forest_tree
+```
+
+```{r}
+random_forest_predictions = predict(random_forest_tree, test_set, type="class")
+table(random_forest_predictions, test_set$num)
+```
+
+```{r}
+(76+77)/(77+76+12+20)
+```
+
+```{r}
+pairs(train_set)
+```
+
+```{r}
+library(ISLR)
+library(plot3D)
+library(e1071)
+```
+

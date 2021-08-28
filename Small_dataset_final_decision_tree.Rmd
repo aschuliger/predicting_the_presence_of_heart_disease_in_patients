@@ -1,0 +1,273 @@
+---
+title: "Small_dataset_decision_tree.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tree)
+library(ISLR)
+library(randomForest)
+library(gbm)
+```
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = 'two_classes_original_heart.csv')
+heart = heart[-1]
+heart
+```
+
+```{r}
+heart = heart[-1]
+length(heart$num)
+heart = na.omit(heart)
+length(heart$num)
+```
+```{r}
+heart = subset(heart, select=-exang)
+heart = heart[!heart$chol == 0,]
+heart = heart[!heart$slope == "",]
+heart = heart[!heart$thal == "",]
+length(heart$num)
+```
+```{r}
+names(heart)
+#print(length(heart$chol[heart$chol == 0]))
+#print(length(heart$trestbps[heart$trestbps == 0]))
+#print(heart$thal)
+print(length(heart$fbs[heart$thal == ""]))
+```
+
+```{r}
+heart = heart[order(heart$num),]
+number_of_class_1 = length(heart$num[heart$num == 0])
+number_of_class_2 = length(heart$num[heart$num == 1])
+difference_distribution = number_of_class_1 - number_of_class_2
+indices = sample.int(number_of_class_1, difference_distribution)
+dataset = heart[-indices,]
+```
+
+```{r}
+dataset
+length(dataset$num[dataset$num == 1])
+length(dataset$num[dataset$num == 0])
+```
+
+```{r}
+dataset$sex = as.factor(dataset$sex)
+dataset$cp = as.factor(dataset$cp)
+dataset$fbs = as.factor(dataset$fbs)
+dataset$restecg = as.factor(dataset$restecg)
+dataset$slope = as.factor(dataset$slope)
+dataset$thal = as.factor(dataset$thal)
+```
+
+```{r}
+dataset$num = as.factor(dataset$num)
+length(dataset$num)
+```
+
+```{r}
+test= sample(dim(dataset)[1], (dim(dataset)[1])/4)
+test_set = dataset[test,]
+train_set = dataset[-test,]
+```
+
+```{r}
+classification_tree = tree(num~., train_set)
+summary(classification_tree)
+```
+```{r}
+plot(classification_tree)
+text(classification_tree, pretty = 0)
+```
+
+
+```{r}
+tr_predictions = predict(classification_tree, train_set, type="class")
+table(tr_predictions, train_set$num)
+```
+
+```{r}
+predictions = predict(classification_tree, test_set, type="class")
+table(predictions, test_set$num)
+```
+```{r}
+#(94+54)/(94+54+17+40)
+(32+23)/(32+23+9+5)
+```
+
+```{r}
+cv_out =cv.tree(classification_tree ,FUN=prune.misclass )
+plot(cv_out$size, cv_out$dev, type="b")
+dev_min = which.min(cv_out$dev)
+points(cv_out$size[dev_min],cv_out$dev[dev_min], col="red",cex=2,pch=20)
+```
+
+
+```{r}
+pruned_tree = prune.misclass(classification_tree,best=7)
+summary(pruned_tree)
+plot(pruned_tree)
+text(pruned_tree, pretty=0)
+```
+```{r}
+pruned_predictions = predict(pruned_tree, test_set, type="class")
+table(pruned_predictions, test_set$num)
+```
+
+```{r}
+(32+23)/(32+23+9+5)
+```
+```{r}
+names(train_set)
+```
+
+```{r}
+bagged_tree = randomForest(num~.,data=train_set, mtry=12, importance=TRUE)
+bagged_tree
+```
+
+```{r}
+(77+88)/(77+88+23+21)
+```
+
+```{r}
+tr_bag_predictions = predict(bagged_tree, train_set, type="class")
+table(tr_bag_predictions, train_set$num)
+```
+
+```{r}
+bag_predictions = predict(bagged_tree, test_set, type="class")
+table(bag_predictions, test_set$num)
+```
+
+```{r}
+(24+33)/(33+24+4+8)
+```
+
+```{r}
+varImpPlot(bagged_tree)
+```
+
+```{r}
+random_forest_tree = randomForest(num~.,data=train_set, mtry=6, importance=TRUE)
+random_forest_tree
+```
+
+```{r}
+random_forest_predictions = predict(random_forest_tree, test_set, type="class")
+table(random_forest_predictions, test_set$num)
+```
+
+```{r}
+(34+25)/(34+25+7+3)
+```
+```{r}
+pairs(train_set)
+```
+
+```{r}
+plot(train_set$age, train_set$thalch, col=train_set$num)
+```
+
+```{r}
+scatter3D(dataset$thalch, dataset$oldpeak, dataset$age, colvar = NULL, col = dataset$num, pch = 19, cex = 0.5)
+```
+
+```{r}
+dataframe = data.frame(age=train_set$age, thalch=train_set$thalch,num=as.factor(train_set$num))
+```
+
+```{r}
+cv_out = tune(svm, num~., data=dataframe, kernel="linear", ranges=list(cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+```
+
+```{r}
+svmfit = cv_out$best.model
+summary(svmfit)
+```
+```{r}
+test_dataframe = data.frame(age=test_set$age, thalch=test_set$thalch,num=as.factor(test_set$num))
+```
+
+```{r}
+predictions = predict(svmfit, dataframe)
+table(predict=predictions, truth=dataframe$num)
+```
+```{r}
+(63+85)/(65+85+35+26)
+```
+
+```{r}
+predictions = predict(svmfit, test_dataframe)
+table(predict=predictions, truth=test_dataframe$num)
+```
+
+```{r}
+(24+23)/(24+23+17+5)
+```
+```{r}
+plot(svmfit, dataframe)
+```
+
+```{r}
+rad_cv_out = tune(svm, num~., data=dataframe, kernel="radial", ranges=list(cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100)), gamma=c(0.5, 1, 2, 3, 4))
+```
+
+```{r}
+rad_svmfit = rad_cv_out$best.model
+summary(rad_svmfit)
+plot(rad_svmfit, dataframe)
+```
+```{r}
+rad_predictions = predict(rad_svmfit, test_dataframe)
+table(predict=rad_predictions, truth=test_dataframe$num)
+```
+```{r}
+(28+23)/(13+5+28+23)
+```
+```{r}
+rad_predictions = predict(rad_svmfit, dataframe)
+table(predict=rad_predictions, truth=dataframe$num)
+```
+```{r}
+(72+86)/(72+25+26+86)
+```
+
+```{r}
+poly_cv_out = tune(svm, num~., data=dataframe, kernel="polynomial", ranges=list(cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100)), gamma=c(0.5, 1, 2, 3, 4))
+```
+
+```{r}
+poly_svmfit = poly_cv_out$best.model
+summary(poly_svmfit)
+plot(poly_svmfit, dataframe)
+```
+```{r}
+poly_predictions = predict(poly_svmfit, test_dataframe)
+table(predict=poly_predictions, truth=test_dataframe$num)
+```
+```{r}
+(27+11)/(27+11+30+1)
+```
+
+```{r}
+poly_predictions = predict(poly_svmfit, dataframe)
+table(predict=poly_predictions, truth=dataframe$num)
+```
+```{r}
+(30+106)/(30+106+68+5)
+```
+
+```{r}
+svmfit = svm(num~., data=dataframe, kernel="linear", cost=10, scale=FALSE)
+plot(svmfit, dataframe)
+summary(svmfit)
+```

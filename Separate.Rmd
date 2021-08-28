@@ -1,0 +1,84 @@
+---
+title: "Preprocess to two classes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = "preprocessed_heart.csv")
+heart = heart[-1]
+```
+
+```{r}
+counts <- table(heart$num)
+barplot(counts, main="Target Distribution",
+   xlab="Target")
+```
+
+```{r}
+heart$num[heart$num == 2] = 1
+heart$num[heart$num == 3] = 1
+heart$num[heart$num == 4] = 1
+```
+
+```{r}
+length(heart$num[heart$num == 1])
+length(heart$num[heart$num == 0])
+```
+```{r}
+write.csv(heart,'two_classes_preprocessed_heart.csv')
+```
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = "heart_disease_uci.csv")
+heart
+```
+
+```{r}
+heart$num[heart$num == 2] = 1
+heart$num[heart$num == 3] = 1
+heart$num[heart$num == 4] = 1
+```
+
+```{r}
+heart = heart[-4]
+heart
+```
+
+```{r}
+sex = rep(0, nrow(heart))
+sex[heart$sex == 'Male'] = 1
+heart$sex = sex
+```
+
+```{r}
+fbs = rep(0, nrow(heart))
+fbs[heart$fbs == 'TRUE'] = 1
+heart$fbs = fbs
+```
+
+```{r}
+heart
+```
+
+```{r}
+exang = rep(0, nrow(heart))
+exang[heart$exang == 'TRUE'] = 1
+heart$exang = exang
+```
+
+```{r}
+write.csv(heart,'two_classes_original_heart.csv')
+```
+
+```{r}
+length(heart$num[heart$num == 1])
+length(heart$num[heart$num == 0])
+```

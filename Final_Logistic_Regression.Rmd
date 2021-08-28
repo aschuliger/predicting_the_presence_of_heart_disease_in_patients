@@ -1,0 +1,118 @@
+---
+title: "Logistic Regression"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(MASS)
+library(class)
+```
+
+## R Markdown
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = 'two_classes_preprocessed_heart.csv')
+heart = heart[-1]
+heart = heart[-1]
+heart
+```
+
+```{r}
+heart = na.omit(heart)
+heart = subset(heart, select=-exang)
+heart = heart[!heart$chol == 0,]
+length(heart$num)
+```
+
+```{r}
+heart = heart[order(heart$num),]
+number_of_class_1 = length(heart$num[heart$num == 0])
+number_of_class_2 = length(heart$num[heart$num == 1])
+difference_distribution = number_of_class_1 - number_of_class_2
+indices = sample.int(number_of_class_1, difference_distribution)
+dataset = heart[-indices,]
+```
+
+```{r}
+dataset
+length(dataset$num[dataset$num == 1])
+length(dataset$num[dataset$num == 0])
+```
+
+```{r}
+dataset$sex = as.factor(dataset$sex)
+dataset$fbs = as.factor(dataset$fbs)
+dataset$typical_angina = as.factor(dataset$typical_angina)
+dataset$non_anginal = as.factor(dataset$non_anginal)
+dataset$atypical_angina = as.factor(dataset$atypical_angina)
+dataset$hypertrophy = as.factor(dataset$hypertrophy)
+dataset$abnormality = as.factor(dataset$abnormality)
+dataset$downsloping = as.factor(dataset$downsloping)
+dataset$upsloping = as.factor(dataset$upsloping)
+dataset$fixed = as.factor(dataset$fixed)
+dataset$reversable = as.factor(dataset$reversable)
+dataset$num = as.factor(dataset$num)
+```
+
+```{r}
+test= sample(dim(dataset)[1], (dim(dataset)[1])/4)
+test_set = dataset[test,]
+train_set = dataset[-test,]
+```
+
+```{r}
+log_fit = glm(num~., family = binomial, data=train_set)
+summary(log_fit)
+log_prob = predict(log_fit, test_set, type="response")
+log_pred = rep(0, length(log_prob))
+log_pred[log_prob>.5]=1
+table(log_pred, test_set$num)
+mean(log_pred == test_set$num)
+```
+
+```{r}
+log_prob = predict(log_fit, train_set, type="response")
+log_pred = rep(0, length(log_prob))
+log_pred[log_prob>.5]=1
+table(log_pred, train_set$num)
+mean(log_pred == train_set$num)
+```
+
+```{r}
+(34+23)/(34+23+7+6)
+```
+```{r}
+select_log_fit = glm(num~typical_angina+atypical_angina+non_anginal+oldpeak+fixed+reversable+ca+age, family = binomial, data=train_set)
+summary(select_log_fit)
+select_log_prob = predict(select_log_fit, test_set, type="response")
+select_log_pred = rep(0, length(select_log_prob))
+select_log_pred[select_log_prob>.5]=1
+table(select_log_pred, test_set$num)
+mean(select_log_pred == test_set$num)
+```
+```{r}
+select_log_prob = predict(select_log_fit, train_set, type="response")
+select_log_pred = rep(0, length(select_log_prob))
+select_log_pred[select_log_prob>.5]=1
+table(select_log_pred, train_set$num)
+mean(select_log_pred == train_set$num)
+```
+
+```{r}
+(34+21)/(34+21+7+8)
+```
+
+```{r}
+s_log_fit = glm(num~ca+non_anginal+typical_angina, family = binomial, data=train_set)
+summary(s_log_fit)
+s_log_prob = predict(s_log_fit, test_set, type="response")
+s_log_pred = rep(0, length(s_log_prob))
+s_log_pred[s_log_prob>.5]=1
+table(s_log_pred, test_set$num)
+mean(s_log_pred == test_set$num)
+```

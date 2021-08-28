@@ -1,0 +1,91 @@
+---
+title: "Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = "heart_disease_uci.csv")
+heart
+```
+```{r}
+heart = heart[-4]
+heart
+```
+
+Preprocess Data
+
+```{r}
+sex = rep(0, nrow(heart))
+sex[heart$sex == 'Male'] = 1
+heart$sex = sex
+```
+
+```{r}
+typical_angina = rep(0, nrow(heart))
+non_anginal = rep(0, nrow(heart))
+atypical_angina = rep(0, nrow(heart))
+typical_angina[heart$cp == 'typical angina'] = 1
+non_anginal[heart$cp == 'non-anginal'] = 1
+atypical_angina[heart$cp == 'atypical angina'] = 1
+heart = heart[-4]
+heart = data.frame(heart,typical_angina)
+heart = data.frame(heart, non_anginal)
+heart = data.frame(heart, atypical_angina)
+```
+
+```{r}
+fbs = rep(0, nrow(heart))
+fbs[heart$fbs == 'TRUE'] = 1
+heart$fbs = fbs
+```
+
+```{r}
+heart
+```
+
+```{r}
+hypertrophy = rep(0, nrow(heart))
+abnormality = rep(0, nrow(heart))
+hypertrophy[heart$restecg == 'lv hypertrophy'] = 1
+abnormality[heart$restecg == 'st-t abnormality'] = 1
+heart = heart[-7]
+heart = data.frame(heart,hypertrophy)
+heart = data.frame(heart, abnormality)
+```
+
+```{r}
+exang = rep(0, nrow(heart))
+exang[heart$exang == 'TRUE'] = 1
+heart$exang = exang
+```
+
+```{r}
+downsloping = rep(0, nrow(heart))
+upsloping = rep(0, nrow(heart))
+downsloping[heart$slope == 'downsloping'] = 1
+upsloping[heart$slope == 'upsloping'] = 1
+heart = heart[-10]
+heart = data.frame(heart,downsloping)
+heart = data.frame(heart, upsloping)
+```
+
+```{r}
+fixed = rep(0, nrow(heart))
+reversable = rep(0, nrow(heart))
+fixed[heart$thal == 'fixed defect'] = 1
+reversable[heart$thal == 'reversable defect'] = 1
+heart = heart[-11]
+heart = data.frame(heart,fixed)
+heart = data.frame(heart,reversable)
+```
+
+```{r}
+write.csv(heart,'preprocessed_heart.csv')
+```

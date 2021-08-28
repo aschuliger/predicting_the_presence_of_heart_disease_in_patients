@@ -1,0 +1,88 @@
+---
+title: "SVM"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(ISLR)
+library(plot3D)
+library(e1071)
+```
+
+```{r}
+set.seed(1)
+heart <- read.csv(file = 'two_classes_original_heart.csv')
+heart = heart[-1]
+heart
+```
+
+```{r}
+heart = heart[-1]
+```
+
+```{r}
+heart = heart[order(-heart$num),]
+number_of_class_2 = length(heart$num[heart$num == 1])
+difference_distribution = number_of_class_2 - length(heart$num[heart$num == 0])
+indices = sample.int(number_of_class_2, difference_distribution)
+dataset = heart[-indices,]
+```
+
+```{r}
+dataset
+length(dataset$num[dataset$num == 1])
+length(dataset$num[dataset$num == 0])
+```
+
+```{r}
+dataset$sex = as.factor(dataset$sex)
+dataset$cp = as.factor(dataset$cp)
+dataset$fbs = as.factor(dataset$fbs)
+dataset$restecg = as.factor(dataset$restecg)
+dataset$exang = as.factor(dataset$exang)
+dataset$slope = as.factor(dataset$slope)
+dataset$thal = as.factor(dataset$thal)
+```
+
+```{r}
+dataset$num = as.factor(dataset$num)
+```
+
+```{r}
+test= sample(dim(dataset)[1], (dim(dataset)[1])/4)
+test_set = dataset[test,]
+train_set = dataset[-test,]
+```
+
+```{r}
+pairs(dataset)
+```
+
+```{r}
+plot(dataset$ca, dataset$chol, col=dataset$num)
+```
+```{r}
+plot(dataset$age, dataset$chol, col=dataset$num)
+```
+
+```{r}
+par(mfrow=c(1,2))
+plot(dataset$thalch, dataset$chol, col=dataset$num)
+plot(dataset$thalch, dataset$age, col=dataset$num)
+```
+
+```{r}
+scatter3D(dataset$thalch, dataset$chol, dataset$age, colvar = NULL, col = dataset$num, pch = 19, cex = 0.5)
+```
+
+```{r}
+dataframe = data.frame(age=dataset$age, chol=dataset$chol, thalch=dataset$thalch, num=dataset$num)
+svmfit = svm(num~., data=dataframe, kernel="linear", cost=10, scale=FALSE)
+plot(svmfit, dataset)
+```
